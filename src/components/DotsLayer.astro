@@ -1,0 +1,48 @@
+---
+// Marker dots scattered across the terrain. Sits BELOW the fog (z-index 3) and
+// the lamp (z-index 2) at z-index 1. Positions are percentages of the stage,
+// mapped from the reference layout. Each dot carries a data-index hook so the
+// GSAP timeline can later stagger them in / pulse them.
+const dots = [
+  { x: 19.8, y: 22 },
+  { x: 30.0, y: 32 },
+  { x: 10.3, y: 42 },
+  { x: 23.0, y: 61 },
+  { x: 42.8, y: 77 },
+  { x: 64.8, y: 30 },
+  { x: 74.5, y: 28 },
+  { x: 96.0, y: 49 },
+  { x: 69.3, y: 69 },
+];
+---
+
+<div class="dots" data-layer="dots" aria-hidden="true">
+  {
+    dots.map((d, i) => (
+      <span
+        class="dot"
+        data-dot
+        data-index={i}
+        style={`left:${d.x}%; top:${d.y}%`}
+      />
+    ))
+  }
+</div>
+
+<style>
+  .dots {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .dot {
+    position: absolute;
+    /* Sized relative to stage width so they scale with the composition. */
+    width: 4.5%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: #c9cfd6;
+  }
+</style>

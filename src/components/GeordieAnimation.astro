@@ -1,0 +1,80 @@
+---
+// Geordie animation stage.
+//
+// Composition model:
+//   - <BaseLayer /> is the static foundation (z-index 0, never animated).
+//   - Animated layers go in the default <slot/> and stack above it.
+//   - The GSAP master timeline below is the single entry point for all motion;
+//     add per-layer tweens to it as layers are introduced.
+import BaseLayer from './BaseLayer.astro';
+
+interface Props {
+  /** Whether the timeline should start playing on load. */
+  autoplay?: boolean;
+}
+
+const { autoplay = true } = Astro.props;
+---
+
+<div class="geordie-stage" data-geordie-stage data-autoplay={String(autoplay)}>
+  <BaseLayer />
+  <div class="geordie-layers">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .geordie-stage {
+    position: relative;
+    width: 100%;
+    /* Preserve the landscape PNG's native 3466 x 1816 aspect ratio. */
+    aspect-ratio: 3466 / 1816;
+    overflow: hidden;
+  }
+  .geordie-layers {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap';
+
+  function initStage(stage: HTMLElement) {
+    const autoplay = stage.dataset.autoplay !== 'false';
+
+    // Respect users who prefer reduced motion.
+    const prefersReduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    // Master timeline — every animated layer hangs off this.
+    const tl = gsap.timeline({
+      paused: !autoplay || prefersReduced,
+      defaults: { ease: 'power2.inOut' },
+    });
+
+    // Expose for debugging / external control during development.
+    (stage as any)._geordieTimeline = tl;
+
+    // ── Add layer animations here as layers are introduced ──
+    // Example:
+    //   const cloud = stage.querySelector('[data-layer="cloud"]');
+    //   if (cloud) tl.to(cloud, { x: 40, duration: 6, repeat: -1, yoyo: true }, 0);
+
+    return tl;
+  }
+
+  function boot() {
+    document
+      .querySelectorAll<HTMLElement>('[data-geordie-stage]')
+      .forEach(initStage);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+</script>

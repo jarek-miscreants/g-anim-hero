@@ -1,0 +1,98 @@
+---
+// Ambient fog blanket — soft fog sheets drifting over the whole stage (sits
+// ABOVE the lamp). Two layers drift at different speeds / opposite phases so
+// the motion reads as living fog with depth rather than a single sliding image.
+import fog from '../assets/fog-2642.png';
+
+interface Props {
+  /** Overall fog strength (0–1). */
+  opacity?: number;
+}
+
+const { opacity = 1 } = Astro.props;
+---
+
+<div class="fog" data-layer="fog" style={`--fog-opacity:${opacity}`} aria-hidden="true">
+  <img class="fog-sheet fog-a" src={fog.src} alt="" />
+  <img class="fog-sheet fog-b" src={fog.src} alt="" />
+</div>
+
+<style>
+  .fog {
+    position: absolute;
+    inset: 0;
+    /* Above the lamp (z-index 2) so the fog drifts over everything. */
+    z-index: 3;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: var(--fog-opacity, 0.6);
+    /* Dense at the top, fading to nothing toward the bottom so the fog never
+       cuts off at a hard edge where the section ends. */
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 1) 0%,
+      rgba(0, 0, 0, 1) 48%,
+      rgba(0, 0, 0, 0.5) 75%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 1) 0%,
+      rgba(0, 0, 0, 1) 48%,
+      rgba(0, 0, 0, 0.5) 75%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+
+  .fog-sheet {
+    position: absolute;
+    /* Oversized so horizontal drift never exposes an edge. */
+    width: 150%;
+    height: 140%;
+    top: -20%;
+    left: -25%;
+    object-fit: cover;
+    will-change: transform;
+  }
+
+  .fog-a {
+    animation: fog-drift-a 32s ease-in-out infinite;
+    opacity: 1;
+  }
+  .fog-b {
+    /* Flipped + slower for a parallax second layer. */
+    transform: scaleX(-1);
+    animation: fog-drift-b 46s ease-in-out infinite;
+    opacity: 0.8;
+  }
+
+  @keyframes fog-drift-a {
+    0% {
+      transform: translate(-6%, 0);
+    }
+    50% {
+      transform: translate(6%, -2%);
+    }
+    100% {
+      transform: translate(-6%, 0);
+    }
+  }
+
+  @keyframes fog-drift-b {
+    0% {
+      transform: scaleX(-1) translate(5%, 0);
+    }
+    50% {
+      transform: scaleX(-1) translate(-5%, 2%);
+    }
+    100% {
+      transform: scaleX(-1) translate(5%, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fog-sheet {
+      animation: none;
+    }
+  }
+</style>

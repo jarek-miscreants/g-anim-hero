@@ -1,0 +1,145 @@
+---
+// The glowing lamp — an animated layer placed at the center of the stage,
+// resting over the terrain. A CSS flame burns inside the lamp's chamber.
+// Animation hooks are wired via the [data-layer="lamp"] selector in
+// GeordieAnimation's master timeline.
+import { Image } from 'astro:assets';
+import lamp from '../assets/geordie-lamp.png';
+
+interface Props {
+  /** Lamp height as a percentage of the stage height. */
+  size?: number;
+  /** Vertical offset as a percentage of the lamp's own height. Negative moves up. */
+  offsetY?: number;
+}
+
+const { size = 32, offsetY = -52 } = Astro.props;
+---
+
+<div
+  class="lamp"
+  data-layer="lamp"
+  style={`--lamp-size:${size}%; --lamp-y:${offsetY}%`}
+>
+  <div class="lamp-figure">
+    <Image class="lamp-img" src={lamp} alt="Glowing lamp" densities={[1, 2]} />
+    <!-- Flame burns inside the chamber, in front of the lamp glass. -->
+    <div class="flame-rig" aria-hidden="true">
+      <div class="blinking-glow"></div>
+      <div class="flame"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .lamp {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    /* Center the lamp within the stage. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Lamp + flame share a container that scales as one. Explicit height (% of
+     stage) + aspect-ratio give it a determinate size, which lets the flame use
+     container-query units (cqw/cqh) to stay proportional to the lamp. */
+  .lamp-figure {
+    position: relative;
+    height: var(--lamp-size);
+    aspect-ratio: 252 / 501;
+    transform: translateY(var(--lamp-y, 0));
+    container-type: size;
+  }
+
+  .lamp-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Above the flame so the lantern frame reads in front of the fire. */
+    z-index: 2;
+  }
+
+  /* ---- Flame (broad, bulky variant), in front of the lamp ------------- */
+  .flame-rig {
+    position: absolute;
+    left: 50%;
+    /* Base sits in the lower-middle of the chamber. */
+    bottom: 24%;
+    transform: translateX(-50%);
+    z-index: 3;
+  }
+
+  .flame {
+    position: absolute;
+    left: 50%;
+    bottom: 0%;
+    transform: translateX(-50%);
+    transform-origin: 50% 100%;
+    /* Broad + short = bulky teardrop (reference was a thin tall candle flame). */
+    width: 30cqw;
+    height: 30cqh;
+    border-radius: 50% 50% 42% 42% / 58% 58% 42% 42%;
+    /* White-hot core fading to yellow then orange at the edge. */
+    background: radial-gradient(
+      ellipse at 50% 72%,
+      #fff 22%,
+      #ffe79a 42%,
+      #ffb13d 68%,
+      #ff7d1c 92%
+    );
+    filter: drop-shadow(0 0 2.5cqh rgba(255, 140, 0, 0.65));
+    animation:
+      moveFlame 4s ease-in-out infinite,
+      enlargeFlame 3.2s ease-in-out infinite;
+  }
+
+  .blinking-glow {
+    position: absolute;
+    left: 50%;
+    bottom: -4cqh;
+    transform: translateX(-50%);
+    width: 35cqw;
+    height: 44cqh;
+    border-radius: 50%;
+    background: #ff7a18;
+    filter: blur(7cqh);
+    opacity: 0.7;
+    animation: blinkIt 0.12s infinite;
+  }
+
+  @keyframes moveFlame {
+    0%,
+    100% {
+      transform: translateX(-50%) rotate(-2deg);
+    }
+    50% {
+      transform: translateX(-50%) rotate(2deg);
+    }
+  }
+  @keyframes enlargeFlame {
+    0%,
+    100% {
+      height: 30cqh;
+    }
+    50% {
+      height: 34cqh;
+    }
+  }
+  @keyframes blinkIt {
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flame,
+    .blinking-glow {
+      animation: none;
+    }
+  }
+</style>

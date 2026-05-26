@@ -1,0 +1,37 @@
+---
+import GeordieAnimation from '../components/GeordieAnimation.astro';
+import DotsLayer from '../components/DotsLayer.astro';
+import LampLayer from '../components/LampLayer.astro';
+import FogLayer from '../components/FogLayer.astro';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Geordie — Animation</title>
+  </head>
+  <body>
+    <main>
+      <GeordieAnimation>
+        <DotsLayer />
+        <LampLayer />
+        <FogLayer />
+      </GeordieAnimation>
+    </main>
+
+    <style is:global>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #fce8cc;
+      }
+      /* Landscape acts as a full-bleed page background. */
+      main {
+        width: 100%;
+      }
+    </style>
+  </body>
+</html>

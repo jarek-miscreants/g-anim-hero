@@ -1,0 +1,24 @@
+---
+// Static base layer — the rendered terrain landscape (PNG, transparent).
+// This layer is NOT animated; it's the foundation other layers stack on.
+import { Image } from 'astro:assets';
+import landscape from '../assets/gerodie-landscape.png';
+---
+
+<div class="base-layer">
+  <Image src={landscape} alt="" densities={[1, 2]} aria-hidden="true" />
+</div>
+
+<style>
+  .base-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+  .base-layer :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+</style>
