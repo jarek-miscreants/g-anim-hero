@@ -1,7 +1,9 @@
 ---
-// Ambient fog blanket — soft fog sheets drifting over the whole stage (sits
-// ABOVE the lamp). Two layers drift at different speeds / opposite phases so
-// the motion reads as living fog with depth rather than a single sliding image.
+// Ambient fog blanket — soft fog sheets drifting over the whole stage (sits at
+// the top of the stack). Split into a LEFT and RIGHT half (identical, clipped
+// to each side) so the GSAP timeline can disperse them outward when the lamp's
+// radiance bursts from the map. Each half holds two sheets drifting at
+// different speeds / phases for living, parallax motion.
 import fog from '../assets/fog-2642.png';
 
 interface Props {
@@ -13,35 +15,54 @@ const { opacity = 1 } = Astro.props;
 ---
 
 <div class="fog" data-layer="fog" style={`--fog-opacity:${opacity}`} aria-hidden="true">
-  <img class="fog-sheet fog-a" src={fog.src} alt="" />
-  <img class="fog-sheet fog-b" src={fog.src} alt="" />
+  <div class="fog-half fog-left" data-fog-left>
+    <img class="fog-sheet fog-a" src={fog.src} alt="" />
+    <img class="fog-sheet fog-b" src={fog.src} alt="" />
+  </div>
+  <div class="fog-half fog-right" data-fog-right>
+    <img class="fog-sheet fog-a" src={fog.src} alt="" />
+    <img class="fog-sheet fog-b" src={fog.src} alt="" />
+  </div>
 </div>
 
 <style>
   .fog {
     position: absolute;
     inset: 0;
-    /* Above the lamp (z-index 2) so the fog drifts over everything. */
-    z-index: 3;
+    /* Top of the stack so the fog drifts over everything. */
+    z-index: 4;
     overflow: hidden;
     pointer-events: none;
-    opacity: var(--fog-opacity, 0.6);
-    /* Dense at the top, fading to nothing toward the bottom so the fog never
-       cuts off at a hard edge where the section ends. */
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 1) 0%,
-      rgba(0, 0, 0, 1) 48%,
-      rgba(0, 0, 0, 0.5) 75%,
-      rgba(0, 0, 0, 0) 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 1) 0%,
-      rgba(0, 0, 0, 1) 48%,
-      rgba(0, 0, 0, 0.5) 75%,
-      rgba(0, 0, 0, 0) 100%
-    );
+    opacity: var(--fog-opacity, 1);
+  }
+
+  /* Each half fills the whole stage. Two masks are intersected:
+       - vertical: fades the fog out toward the bottom (no hard cut-off edge)
+       - horizontal: a soft inner-edge crossfade toward the centre
+     The two horizontal fades are complementary, so at rest they sum back to a
+     seamless blanket; during the disperse they give the halves soft inner edges
+     instead of a hard clip line. */
+  .fog-half {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  .fog-left {
+    -webkit-mask-image:
+      linear-gradient(to bottom, #000 0%, #000 48%, rgba(0, 0, 0, 0.5) 75%, transparent 100%),
+      linear-gradient(to right, #000 36%, transparent 64%);
+    mask-image:
+      linear-gradient(to bottom, #000 0%, #000 48%, rgba(0, 0, 0, 0.5) 75%, transparent 100%),
+      linear-gradient(to right, #000 36%, transparent 64%);
+  }
+  .fog-right {
+    -webkit-mask-image:
+      linear-gradient(to bottom, #000 0%, #000 48%, rgba(0, 0, 0, 0.5) 75%, transparent 100%),
+      linear-gradient(to right, transparent 36%, #000 64%);
+    mask-image:
+      linear-gradient(to bottom, #000 0%, #000 48%, rgba(0, 0, 0, 0.5) 75%, transparent 100%),
+      linear-gradient(to right, transparent 36%, #000 64%);
   }
 
   .fog-sheet {

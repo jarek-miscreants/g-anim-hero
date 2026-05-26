@@ -1,0 +1,79 @@
+---
+// Radiant burst that blooms from the lamp/map. A warm amber radial gradient.
+// Structure: an outer .radiance-bloom (GSAP scales + fades it in during the
+// reveal) wrapping a .radiance-core that pulses continuously (CSS), so the glow
+// throbs as it appears. Sits behind the lamp (z-index 2). Starts invisible.
+interface Props {
+  /** Vertical center as a % of the stage (matches the lamp's position). */
+  centerY?: number;
+}
+
+const { centerY = 34 } = Astro.props;
+---
+
+<div
+  class="radiance"
+  data-layer="radiance"
+  style={`--radiance-y:${centerY}%`}
+  aria-hidden="true"
+>
+  <div class="radiance-bloom" data-radiance-bloom>
+    <div class="radiance-core"></div>
+  </div>
+</div>
+
+<style>
+  .radiance {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .radiance-bloom {
+    position: absolute;
+    left: 50%;
+    top: var(--radiance-y, 34%);
+    /* Prominent, but sized so the glow fades out before the stage edges. */
+    width: 80%;
+    aspect-ratio: 1.6 / 1;
+    opacity: 0; /* GSAP drives the bloom (scale + opacity + centering). */
+    will-change: transform, opacity;
+  }
+  .radiance-core {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    /* Long, gradual tail to fully transparent at the edge — no defined ring. */
+    background: radial-gradient(
+      ellipse at 50% 50%,
+      rgba(255, 243, 216, 0.95) 0%,
+      rgba(255, 212, 140, 0.78) 14%,
+      rgba(255, 180, 90, 0.48) 30%,
+      rgba(250, 150, 36, 0.24) 48%,
+      rgba(247, 134, 10, 0.1) 68%,
+      rgba(247, 128, 0, 0.03) 84%,
+      rgba(247, 128, 0, 0) 100%
+    );
+    filter: blur(16px);
+    /* Throbs continuously, so it pulses as the bloom reveals it. */
+    animation: radiance-pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes radiance-pulse {
+    0%,
+    100% {
+      transform: scale(0.94);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.06);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .radiance-core {
+      animation: none;
+    }
+  }
+</style>

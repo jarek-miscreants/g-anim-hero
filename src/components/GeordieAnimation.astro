@@ -49,19 +49,72 @@ const { autoplay = true } = Astro.props;
       '(prefers-reduced-motion: reduce)'
     ).matches;
 
-    // Master timeline — every animated layer hangs off this.
-    const tl = gsap.timeline({
-      paused: !autoplay || prefersReduced,
-      defaults: { ease: 'power2.inOut' },
+    // Layer hooks.
+    const flameRig = stage.querySelector('.flame-rig');
+    const radiance = stage.querySelector('[data-radiance-bloom]');
+    const fogLeft = stage.querySelector('[data-fog-left]');
+    const fogRight = stage.querySelector('[data-fog-right]');
+
+    // Resting state: flame dim, radiance hidden, fog in place.
+    gsap.set(flameRig, { transformOrigin: '50% 100%', scale: 0.78, opacity: 0.4 });
+    gsap.set(radiance, {
+      xPercent: -50,
+      yPercent: -50,
+      transformOrigin: '50% 50%',
+      scale: 0.3,
+      opacity: 0,
     });
 
-    // Expose for debugging / external control during development.
+    // Master timeline — every animated layer hangs off this.
+    const tl = gsap.timeline({
+      paused: !autoplay,
+      defaults: { ease: 'power2.inOut' },
+    });
     (stage as any)._geordieTimeline = tl;
 
-    // ── Add layer animations here as layers are introduced ──
-    // Example:
-    //   const cloud = stage.querySelector('[data-layer="cloud"]');
-    //   if (cloud) tl.to(cloud, { x: 40, duration: 6, repeat: -1, yoyo: true }, 0);
+    // Reduced motion: skip the show, settle straight to the revealed end state.
+    if (prefersReduced) {
+      gsap.set(flameRig, { scale: 1, opacity: 1 });
+      gsap.set(radiance, { scale: 1, opacity: 1 });
+      gsap.set([fogLeft, fogRight], { opacity: 0 });
+      return tl;
+    }
+
+    // 1. Hold ~3s — fog drifts (CSS), flame stays dim.
+    tl.to({}, { duration: 3 });
+
+    // 2. Flame grows prominent and bright (capped at base size so it fits).
+    tl.to(
+      flameRig,
+      { scale: 1, opacity: 1, duration: 1.6, ease: 'power2.out' },
+      3
+    );
+
+    // 3. Radiance ignites in a pulsating burst (rapid throbs that ramp up),
+    //    then settles to a steady glow (the CSS pulse takes over from there);
+    //    the fog disperses to each side.
+    const burst = 4.4;
+    const ignite = gsap.timeline();
+    ignite
+      .to(radiance, { opacity: 0.7, scale: 0.72, duration: 0.16, ease: 'power2.out' })
+      .to(radiance, { opacity: 0.4, scale: 0.58, duration: 0.14, ease: 'power2.in' })
+      .to(radiance, { opacity: 0.95, scale: 0.94, duration: 0.15, ease: 'power2.out' })
+      .to(radiance, { opacity: 0.6, scale: 0.8, duration: 0.14, ease: 'power2.in' })
+      .to(radiance, { opacity: 1, scale: 1.08, duration: 0.14, ease: 'power2.out' })
+      .to(radiance, { opacity: 0.85, scale: 0.97, duration: 0.13, ease: 'power2.in' })
+      .to(radiance, { opacity: 1, scale: 1, duration: 0.55, ease: 'power1.inOut' });
+    tl.add(ignite, burst);
+
+    tl.to(
+      fogLeft,
+      { xPercent: -70, opacity: 0, duration: 2.4, ease: 'power2.in' },
+      burst + 0.3
+    );
+    tl.to(
+      fogRight,
+      { xPercent: 70, opacity: 0, duration: 2.4, ease: 'power2.in' },
+      burst + 0.3
+    );
 
     return tl;
   }

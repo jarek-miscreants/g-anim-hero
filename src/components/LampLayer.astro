@@ -35,7 +35,8 @@ const { size = 32, offsetY = -52 } = Astro.props;
   .lamp {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    /* Above the radiance (2); below the fog (4). */
+    z-index: 3;
     pointer-events: none;
     /* Center the lamp within the stage. */
     display: flex;
