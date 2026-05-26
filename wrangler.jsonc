@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "g-anim-hero",
+  "compatibility_date": "2026-05-26",
+  // Purely static Astro site: no `main`/Worker code — just serve the build
+  // output. Having this file present stops `wrangler deploy` from auto-running
+  // `astro add cloudflare` (which failed on the missing public/.assetsignore).
+  "assets": {
+    "directory": "./dist"
+  }
+}
